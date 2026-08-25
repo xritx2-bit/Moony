@@ -1,3 +1,6 @@
+// Load encryption library required by @discordjs/voice
+require('libsodium-wrappers');
+
 const {
   joinVoiceChannel,
   createAudioPlayer,
@@ -17,6 +20,7 @@ const ytdl = require('@distube/ytdl-core');
 const SpotifyResolver = require('./spotifyResolver');
 const colors = require('./colors');
 const Logger = require('./logger');
+
 
 // Global guild music managers map
 const queues = new Map();
