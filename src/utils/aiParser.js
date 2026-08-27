@@ -166,7 +166,7 @@ class AIParser {
     // 2. Try Gemini API (if key provided)
     if (config.geminiKey) {
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${config.geminiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${config.geminiKey}`;
         const body = {
           contents: [
             {
