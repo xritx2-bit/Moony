@@ -1,7 +1,6 @@
 const axios = require('axios');
 const config = require('../config');
 const Logger = require('./logger');
-const WebSearch = require('./webSearch');
 
 const MOONY_WELCOME = `🌙 **Heyyy! I'm Moony!** 💙
 
@@ -215,29 +214,7 @@ class AIParser {
       }
     }
 
-    // 4. Live Internet Knowledge & Web Search (Works completely FREE without API keys!)
-    try {
-      // Strip conversational filler like "moony what is" / "can you tell me"
-      const searchTopic = clean
-        .replace(/^(?:moony|bot|hey moony|tell me|what is|who is|how to|where is|explain|search for|google)\s+/i, '')
-        .trim();
-
-      const searchResult = await WebSearch.search(searchTopic || clean);
-
-      if (searchResult && searchResult.summary) {
-        let reply = `🌙 **Here is what I found for you!** 💙\n\n`;
-        reply += `📌 **${searchResult.title}**\n`;
-        reply += `${searchResult.summary}\n\n`;
-        if (searchResult.url) {
-          reply += `🔗 *Source:* <${searchResult.url}>\n`;
-        }
-        reply += `— *Searched with Moony Moon Magic 🌙*`;
-        return reply;
-      }
-    } catch (searchErr) {
-      Logger.error('Search error in AI parser:', searchErr.message);
-    }
-
+    // Google/Web Search fallback has been removed per user request.
     // 5. Friendly Personality Fallback
     return (
       `🌙 **Moony here!** 💙\n\n` +
