@@ -467,17 +467,23 @@
       try {
         const res = await fetch('/api/stats');
         const data = await res.json();
-        if (data.botName) {
-          document.getElementById('botTitle').innerText = data.botName.toUpperCase();
-          if (data.botAvatar) document.getElementById('botAvatar').src = data.botAvatar;
-          document.getElementById('statGuilds').innerText = data.guildCount.toLocaleString();
-          if (document.getElementById('statOrders')) {
-            document.getElementById('statOrders').innerText = (data.totalStoreOrders || 0).toString();
-          }
-          document.getElementById('statCommands').innerText = data.commandCount.toString();
-          document.getElementById('statUptime').innerText = data.uptime;
-          document.getElementById('statPing').innerText = `${data.ping} ms`;
-          document.getElementById('statMemory').innerText = `${data.memoryUsageMb} MB`;
+        if (data && data.botName) {
+          const titleEl = document.getElementById('botTitle');
+          if (titleEl) titleEl.innerText = (data.botName || 'Moony').toUpperCase();
+          const avatarEl = document.getElementById('botAvatar');
+          if (avatarEl && data.botAvatar) avatarEl.src = data.botAvatar;
+          const guildsEl = document.getElementById('statGuilds');
+          if (guildsEl) guildsEl.innerText = (data.guildCount ?? 0).toLocaleString();
+          const ordersEl = document.getElementById('statOrders');
+          if (ordersEl) ordersEl.innerText = (data.totalStoreOrders ?? 0).toString();
+          const cmdsEl = document.getElementById('statCommands');
+          if (cmdsEl) cmdsEl.innerText = (data.commandCount ?? 0).toString();
+          const uptimeEl = document.getElementById('statUptime');
+          if (uptimeEl) uptimeEl.innerText = data.uptime || '0d 0h 0m';
+          const pingEl = document.getElementById('statPing');
+          if (pingEl) pingEl.innerText = `${data.ping ?? 0} ms`;
+          const memoryEl = document.getElementById('statMemory');
+          if (memoryEl) memoryEl.innerText = `${data.memoryUsageMb ?? '0.0'} MB`;
         }
       } catch (e) {
         console.error('Failed to fetch stats:', e);
