@@ -35,6 +35,29 @@ const client = new Client({
 CommandHandler.load(client);
 EventHandler.load(client);
 
+// Automatically register/sync slash commands with Discord upon ready
+client.once('ready', async () => {
+  try {
+    Logger.info(`Logged in as ${client.user.tag}! Registering application commands...`);
+    if (config.guildId) {
+      const guild = await client.guilds.fetch(config.guildId).catch(() => null);
+      if (guild) {
+        await guild.commands.set(client.slashCommands);
+        Logger.success(`Successfully registered ${client.slashCommands.length} guild commands to guild: ${guild.name}`);
+      } else {
+        Logger.warn(`Guild ID ${config.guildId} not found, falling back to global command registration...`);
+        await client.application.commands.set(client.slashCommands);
+        Logger.success(`Successfully registered ${client.slashCommands.length} global application commands!`);
+      }
+    } else {
+      await client.application.commands.set(client.slashCommands);
+      Logger.success(`Successfully registered ${client.slashCommands.length} global application commands!`);
+    }
+  } catch (error) {
+    Logger.error('Failed to register application commands on ready:', error.message);
+  }
+});
+
 // Launch the built-in Web Dashboard
 try {
   startDashboard(client, config.port || 3000);
