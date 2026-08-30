@@ -1,6 +1,7 @@
 const axios = require('axios');
 const config = require('../config');
 const Logger = require('./logger');
+const WebSearch = require('./webSearch');
 
 const MOONY_WELCOME = `🌙 **Heyyy! I'm Moony!** 💙
 
@@ -24,25 +25,7 @@ class AIParser {
   static parseCommandIntent(text) {
     const clean = text.toLowerCase().trim();
 
-    // 1. Music Play
-    const playMatch = clean.match(/(?:play|stream|put on)\s+(.+)/i);
-    if (playMatch) {
-      return { intent: 'music_play', query: playMatch[1].trim() };
-    }
-    if (clean.includes('skip song') || clean.includes('skip track') || clean === 'skip' || clean === 'next song') {
-      return { intent: 'music_skip' };
-    }
-    if (clean.includes('pause music') || clean === 'pause') {
-      return { intent: 'music_pause' };
-    }
-    if (clean.includes('resume music') || clean === 'resume') {
-      return { intent: 'music_resume' };
-    }
-    if (clean.includes('stop music') || clean.includes('leave voice') || clean === 'stop') {
-      return { intent: 'music_stop' };
-    }
-
-    // 2. Moderation Purge
+    // 1. Moderation Purge
     const purgeMatch = clean.match(/(?:purge|clear|delete)\s+(\d+)\s*(?:messages?)?/i);
     if (purgeMatch) {
       return { intent: 'mod_purge', amount: parseInt(purgeMatch[1], 10) };
@@ -159,14 +142,14 @@ class AIParser {
     ) {
       return (
         `🌙 **I'm Moony!** 💙 A cute all-in-one Discord bot created by **RixiePlayz** ✨\n\n` +
-        `I can stream high-fidelity Spotify music, moderate servers, track XP levels with custom SVG rank cards, manage tickets, post live YouTube/Reddit feeds, and search up answers for you anytime! 🚀`
+        `I can help moderate servers, track XP levels with custom SVG rank cards, manage automated store tickets, post live YouTube/Reddit feeds, and search up answers for you anytime! 🚀`
       );
     }
 
     // 2. Try Gemini API (if key provided)
     if (config.geminiKey) {
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${config.geminiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`;
         const body = {
           contents: [
             {
@@ -214,11 +197,33 @@ class AIParser {
       }
     }
 
-    // Google/Web Search fallback has been removed per user request.
+    // 4. Live Internet Knowledge & Web Search (Works completely FREE without API keys!)
+    try {
+      // Strip conversational filler like "moony what is" / "can you tell me"
+      const searchTopic = clean
+        .replace(/^(?:moony|bot|hey moony|tell me|what is|who is|how to|where is|explain|search for|google)\s+/i, '')
+        .trim();
+
+      const searchResult = await WebSearch.search(searchTopic || clean);
+
+      if (searchResult && searchResult.summary) {
+        let reply = `🌙 **Here is what I found for you!** 💙\n\n`;
+        reply += `📌 **${searchResult.title}**\n`;
+        reply += `${searchResult.summary}\n\n`;
+        if (searchResult.url) {
+          reply += `🔗 *Source:* <${searchResult.url}>\n`;
+        }
+        reply += `— *Searched with Moony Moon Magic 🌙*`;
+        return reply;
+      }
+    } catch (searchErr) {
+      Logger.error('Search error in AI parser:', searchErr.message);
+    }
+
     // 5. Friendly Personality Fallback
     return (
       `🌙 **Moony here!** 💙\n\n` +
-      `I heard your message! I'm here to help with music, moderation, leveling, tickets, and searching up information.\n\n` +
+      `I heard your message! I'm here to help with moderation, leveling, store tickets, and searching up information.\n\n` +
       `Ask me any question like:\n` +
       `• *"Who created you?"*\n` +
       `• *"What is Minecraft?"*\n` +

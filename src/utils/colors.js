@@ -1,6 +1,5 @@
 module.exports = {
   primary: 0x5865F2,   // Blurple
-  spotify: 0x1DB954,   // Spotify Green
   success: 0x57F287,   // Emerald Green
   danger: 0xED4245,    // Crimson Red
   warning: 0xFEE75C,   // Gold Yellow

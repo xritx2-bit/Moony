@@ -4,7 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Moony • The All-in-One Discord SuperBot Dashboard</title>
-  <meta name="description" content="Moony Discord SuperBot Web Dashboard - Spotify Music, Moderation, Leveling, Tickets, Feeds, and AI.">
+  <meta name="description" content="Moony Discord SuperBot Web Dashboard - Moderation, Leveling, Minecraft Store Tickets, Feeds, and AI.">
+  <script>
+    // Safeguard window.fetch for iframe embedding and proxy interceptors
+    (function() {
+      try {
+        let currentFetch = window.fetch ? window.fetch.bind(window) : null;
+        Object.defineProperty(window, 'fetch', {
+          get: function() {
+            return currentFetch || (window.fetch ? window.fetch.bind(window) : null);
+          },
+          set: function(fn) {
+            currentFetch = fn;
+          },
+          configurable: true,
+          enumerable: true
+        });
+      } catch (e) {
+        // Fallback if property is already defined
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -32,7 +52,8 @@
 
       <nav class="nav-links">
         <a href="#stats" class="nav-link active">Overview</a>
-        <a href="#live-music" class="nav-link">Live Music</a>
+        <a href="#store" class="nav-link">🛒 Minecraft Store & Tickets</a>
+        <a href="#leveling-config" class="nav-link">✨ Leveling Alerts</a>
         <a href="#features" class="nav-link">Features</a>
         <a href="#commands" class="nav-link">Commands</a>
         <a href="https://discord.com" target="_blank" class="btn-primary invite-btn">
@@ -47,13 +68,13 @@
     <!-- Hero Banner -->
     <section class="hero-section">
       <div class="hero-badge">🌙 THE ULTIMATE ALL-IN-ONE DISCORD SUPERBOT</div>
-      <h2 class="hero-title">Spotify-Grade Music, Security & Gamification</h2>
+      <h2 class="hero-title">Automated Store Tickets, Security & Gamification</h2>
       <p class="hero-subtitle">
-        Elevate your Discord server with lossless audio streaming, interactive playback controls, automated moderation, dynamic SVG rank cards, background news feeds, and AI.
+        Elevate your Discord server with automated Minecraft store order tickets, account verification, automated moderation, dynamic SVG rank cards, background feeds, and AI.
       </p>
       <div class="hero-actions">
         <a href="#commands" class="btn-hero-primary">Explore Commands</a>
-        <a href="#live-music" class="btn-hero-secondary">Watch Live Audio</a>
+        <a href="#store" class="btn-hero-secondary">Minecraft Store Hub</a>
       </div>
     </section>
 
@@ -74,10 +95,10 @@
         </div>
 
         <div class="glass-card stat-card">
-          <div class="stat-icon-wrap icon-green">🎵</div>
+          <div class="stat-icon-wrap icon-green">🌸</div>
           <div class="stat-info">
-            <span class="stat-label">Voice Streams</span>
-            <span id="statVoice" class="stat-value">--</span>
+            <span class="stat-label">Store Orders</span>
+            <span id="statOrders" class="stat-value">--</span>
           </div>
         </div>
 
@@ -115,24 +136,234 @@
       </div>
     </section>
 
-    <!-- Live Music Streaming Visualizer -->
-    <section id="live-music" class="section-container">
+    <!-- Minecraft Web Store & Ticket Automation Hub -->
+    <section id="store" class="section-container">
       <div class="section-header">
         <div class="header-left">
-          <h3 class="section-title">🎵 Live Spotify Music Stream</h3>
-          <p class="section-subtitle">Real-time visualization of songs currently playing across connected voice channels</p>
+          <h3 class="section-title">🛒 Minecraft Web Store & Ticket Integration</h3>
+          <p class="section-subtitle">Real Discord verification, automated invite dispatch, and instant Sakura Ticket channel generation</p>
         </div>
-        <div class="live-pill">
-          <span class="pulse-dot"></span> LIVE AUDIO MONITOR
+        <div class="sakura-tag">
+          🌸 MELIX MC STORE SUITE
         </div>
       </div>
 
-      <div id="musicStreamsContainer" class="music-streams-wrapper">
-        <div class="glass-card empty-state">
-          <div class="empty-icon">🎧</div>
-          <h4>No Active Music Streams</h4>
-          <p>Join a voice channel and type <code>/play &lt;song&gt;</code> or <code>/radio</code> to start streaming high-fidelity audio!</p>
+      <div class="store-grid">
+        <!-- Store Checkout & Ticket Simulator -->
+        <div class="glass-card store-card">
+          <div class="card-heading-wrap">
+            <h4 class="card-heading">🛍️ Webstore Checkout & Ticket Generator</h4>
+            <span class="badge-tag">AUTHENTICATED FLOW</span>
+          </div>
+
+          <form id="storeOrderForm" onsubmit="handleStoreOrderSubmit(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Minecraft IGN</label>
+                <input type="text" id="storeIgn" class="form-input" placeholder="e.g. Rixieplayz" value="Rixieplayz" required oninput="updateLiveTicketPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Discord User / Numeric ID</label>
+                <input type="text" id="storeDiscord" class="form-input" placeholder="User ID or tag e.g. rixieplayz" value="rixieplayz" required oninput="checkDiscordAccountDebounced()">
+              </div>
+            </div>
+
+            <!-- Live Discord Verification Status Box -->
+            <div class="discord-verify-status" id="discordVerifyBox">
+              <img id="verifyAvatar" src="https://cdn.discordapp.com/embed/avatars/0.png" class="verify-user-avatar" alt="Avatar">
+              <div class="verify-details">
+                <div style="font-weight: 700; color: #fff;" id="verifyTag">rixieplayz</div>
+                <div style="font-size: 0.75rem; color: #949BA4;" id="verifyId">ID: Checking...</div>
+              </div>
+              <span id="verifyBadge" class="verify-badge badge-in-server">Server Member</span>
+            </div>
+
+            <div class="form-row" style="margin-top: 1rem;">
+              <div class="form-group">
+                <label class="form-label">Purchased Rank / Package</label>
+                <select id="storeItem" class="form-select" onchange="handleItemChange()">
+                  <option value="LEGEND RANK" data-price="99">LEGEND RANK (₹99)</option>
+                  <option value="VIP+ RANK" data-price="49">VIP+ RANK (₹49)</option>
+                  <option value="TITAN RANK" data-price="199">TITAN RANK (₹199)</option>
+                  <option value="5000 COINS" data-price="29">5,000 In-Game Coins (₹29)</option>
+                  <option value="CUSTOM PACKAGE" data-price="149">Custom Perks Bundle (₹149)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Price Amount (INR ₹)</label>
+                <input type="number" id="storePrice" class="form-input" value="99" required oninput="updateLiveTicketPreview()">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 1rem;">
+              <label class="form-label">Payment Method Details</label>
+              <input type="text" id="storePayment" class="form-input" value="UPI (GPay / PhonePe / Paytm / BHIM QR)" oninput="updateLiveTicketPreview()">
+            </div>
+
+            <button type="submit" id="btnSubmitOrder" class="btn-store-action" style="margin-top: 1.25rem; width: 100%;">
+              <span>🌸 Process Order & Generate Discord Ticket</span>
+            </button>
+          </form>
+
+          <div id="orderResultBox" style="display: none; padding: 1rem; border-radius: 10px; font-size: 0.88rem;"></div>
         </div>
+
+        <!-- Live Discord Ticket Embed Preview (Cherry Blossom Theme - Exact Match to Design) -->
+        <div class="glass-card store-card">
+          <div class="card-heading-wrap">
+            <h4 class="card-heading">🌸 Live Ticket Channel Preview</h4>
+            <span class="sakura-tag" id="previewTicketStatus">TICKET ACTIVE</span>
+          </div>
+
+          <div class="discord-ticket-window">
+            <div class="discord-channel-header">
+              <span class="channel-hash">#</span>
+              <span id="previewChannelName">ticket-rixieplayz-2692</span>
+              <span class="channel-topic">Melix MC Store • Purchase Support</span>
+            </div>
+
+            <div class="discord-message-area">
+              <img src="https://cdn-icons-png.flaticon.com/512/174/174872.png" class="discord-bot-avatar" alt="Moony Bot">
+              <div class="discord-msg-content">
+                <div class="discord-msg-author">
+                  <span class="author-name">Moony SuperBot</span>
+                  <span class="bot-tag-pill">BOT</span>
+                  <span class="msg-time">Today at 9:42 PM</span>
+                </div>
+
+                <div class="discord-greeting-text">
+                  Hello <strong id="previewUserMention">@rixieplayz</strong>! Welcome to your private store ticket channel. Our staff team has been notified.
+                </div>
+
+                <!-- Cherry Blossom Ticket Embed (Exact replica of Image 1) -->
+                <div class="discord-embed-card">
+                  <div class="embed-top-row">
+                    <span class="embed-title">Melix MC Store - Order <span id="previewOrderId">#MLX-212692</span></span>
+                    <span class="embed-status-badge">TICKET ACTIVE</span>
+                  </div>
+
+                  <div class="embed-fields-grid">
+                    <div class="embed-field">
+                      <div class="embed-field-label">Customer</div>
+                      <div class="embed-field-val" id="previewCustomerVal">rixieplayz (IGN: Rixieplayz)</div>
+                    </div>
+                    <div class="embed-field">
+                      <div class="embed-field-label">Payment Method</div>
+                      <div class="embed-field-val" id="previewPaymentVal">UPI (GPay / PhonePe / Paytm / BHIM QR)</div>
+                    </div>
+                  </div>
+
+                  <div class="embed-items-block">
+                    <div class="embed-field-label" style="margin-bottom: 0.2rem;">Items:</div>
+                    <div style="font-size: 0.88rem; color: #fff; font-weight: 600;" id="previewItemVal">
+                      LEGEND RANK (₹99)
+                    </div>
+                  </div>
+
+                  <div class="embed-total-row">
+                    <span>Total Due:</span>
+                    <span class="total-due-val" id="previewTotalVal">₹99</span>
+                  </div>
+                </div>
+
+                <!-- Staff Action buttons preview -->
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem; flex-wrap: wrap;">
+                  <button type="button" class="btn-copy-code" style="background: #248046; border: none; font-weight: 600;">✅ Mark Paid & Delivered</button>
+                  <button type="button" class="btn-copy-code" style="background: #4E5058; border: none; font-weight: 600;">🔒 Close Ticket</button>
+                  <button type="button" class="btn-copy-code" style="background: #5865F2; border: none; font-weight: 600;">🙋 Claim Ticket</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Universal Webhook Configuration Card -->
+      <div class="glass-card store-card" style="margin-bottom: 2rem;">
+        <div class="card-heading-wrap">
+          <h4 class="card-heading">🌐 Connect External Minecraft Web Store (Tebex / CraftingStore / WooCommerce)</h4>
+          <span class="badge-tag">WEBHOOK ENDPOINT</span>
+        </div>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+          Configure your Minecraft Webstore (Tebex, CraftingStore, Buycraft, WooCommerce, or Custom Store) to send a webhook POST request upon purchase. Moony will automatically authenticate the Discord user, send an invite if they are not in your server, and create the private ticket!
+        </p>
+
+        <div class="webhook-snippet">
+          <span id="webhookUrlText">POST http://localhost:3000/api/store/webhook</span>
+          <button class="btn-copy-code" onclick="copyWebhookUrl()">📋 Copy Webhook URL</button>
+        </div>
+
+        <div style="display: flex; gap: 0.8rem; flex-wrap: wrap; margin-top: 0.5rem;">
+          <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;" onclick="dispatchTestWebhook('in_server')">
+            ⚡ Test Webhook: Member In Server
+          </button>
+          <button class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: linear-gradient(135deg, #F59E0B, #D97706);" onclick="dispatchTestWebhook('out_of_server')">
+            ⚡ Test Webhook: Buyer Outside Server (Sends Invite)
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Web Store Orders & Ticket Tracker -->
+      <div class="glass-card store-card">
+        <div class="card-heading-wrap">
+          <h4 class="card-heading">📦 Live Web Store Orders & Tickets</h4>
+          <span class="badge-tag" id="orderCountBadge">0 ORDERS</span>
+        </div>
+
+        <div class="orders-table-wrapper">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>IGN</th>
+                <th>Discord User</th>
+                <th>Item / Rank</th>
+                <th>Price</th>
+                <th>Status</th>
+                <th>Ticket Channel</th>
+              </tr>
+            </thead>
+            <tbody id="storeOrdersTableBody">
+              <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading store orders...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Leveling System Announcement Channel Manager -->
+    <section id="leveling-config" class="section-container">
+      <div class="section-header">
+        <div class="header-left">
+          <h3 class="section-title">✨ Level-Up Announcement Channel</h3>
+          <p class="section-subtitle">Notify users in a specific dedicated channel when they rank up or unlock roles</p>
+        </div>
+        <div class="badge-tag" style="background: rgba(155, 89, 182, 0.2); color: #9B59B6;">
+          GAMIFICATION SETTINGS
+        </div>
+      </div>
+
+      <div class="glass-card store-card">
+        <div class="leveling-bar">
+          <div style="flex: 1; min-width: 250px;">
+            <label class="form-label" style="margin-bottom: 0.5rem; display: block;">Designated Level-Up Channel</label>
+            <select id="levelChannelSelect" class="form-select" style="width: 100%;">
+              <option value="">💬 Current Channel (where user chatted)</option>
+              <option value="dm">📨 Direct Message (Private DM)</option>
+              <option value="none">🤫 Silent Mode (No announcements)</option>
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 0.8rem; align-items: flex-end;">
+            <button class="btn-primary" onclick="saveLevelingSettings()" style="padding: 0.75rem 1.4rem;">
+              💾 Save Level Channel
+            </button>
+          </div>
+        </div>
+
+        <div id="levelingFeedback" style="display: none; padding: 0.8rem 1rem; border-radius: 8px; font-size: 0.88rem;"></div>
       </div>
     </section>
 
@@ -140,14 +371,14 @@
     <section id="features" class="section-container">
       <div class="section-header">
         <h3 class="section-title">✨ Supercharged Feature Suite</h3>
-        <p class="section-subtitle">Everything you need to run, protect, and entertain your community</p>
+        <p class="section-subtitle">Everything you need to run, protect, and automate your Minecraft & Discord community</p>
       </div>
 
       <div class="features-grid">
         <div class="glass-card feature-card">
-          <div class="feature-badge" style="background: rgba(29, 185, 84, 0.15); color: #1DB954;">SPOTIFY AUDIO</div>
-          <h4>Lossless Music & 24/7 Web Radio</h4>
-          <p>Supports Spotify track/album/playlist links, YouTube search with live autocomplete, saved personal playlists, and 24/7 lo-fi/synthwave radio.</p>
+          <div class="feature-badge" style="background: rgba(230, 126, 34, 0.15); color: #E67E22;">STORE & TICKETS</div>
+          <h4>Minecraft Web Store Automation</h4>
+          <p>Automated buyer Discord verification, invite dispatch if not in server, and instant private Sakura Ticket channel generation with claim buttons.</p>
         </div>
 
         <div class="glass-card feature-card">
@@ -159,19 +390,19 @@
         <div class="glass-card feature-card">
           <div class="feature-badge" style="background: rgba(155, 89, 182, 0.15); color: #9B59B6;">GAMIFICATION</div>
           <h4>Dynamic SVG Rank Cards & XP</h4>
-          <p>High-definition vector rank cards with level progress bars, server leaderboards, role milestones, and virtual coin economy.</p>
+          <p>High-definition vector rank cards with level progress bars, server leaderboards, role milestones, and dedicated channel level-up announcements.</p>
         </div>
 
         <div class="glass-card feature-card">
-          <div class="feature-badge" style="background: rgba(230, 126, 34, 0.15); color: #E67E22;">SUPPORT DESK</div>
-          <h4>Interactive Ticketing System</h4>
-          <p>One-click private ticket channel generator with multi-department support, staff claim buttons, and exportable transcript logs.</p>
+          <div class="feature-badge" style="background: rgba(241, 196, 15, 0.15); color: #F1C40F;">ECONOMY & REWARDS</div>
+          <h4>Server Economy & Daily Rewards</h4>
+          <p>Complete virtual economy with /daily rewards, /work, gambling minigames, user coin transfers, and custom role shops.</p>
         </div>
 
         <div class="glass-card feature-card">
           <div class="feature-badge" style="background: rgba(52, 152, 219, 0.15); color: #3498DB;">FEEDS & ALERTS</div>
           <h4>Automated Background Posters</h4>
-          <p>2-minute background polling for YouTube video uploads, Reddit subreddit posts, and custom RSS feeds automatically dispatched to designated channels.</p>
+          <p>Background polling for YouTube video uploads, Reddit subreddit posts, and custom RSS feeds automatically dispatched to designated channels.</p>
         </div>
 
         <div class="glass-card feature-card">
@@ -196,7 +427,6 @@
         </div>
         <div class="category-pills" id="categoryFilter">
           <button class="cat-pill active" data-cat="all">All</button>
-          <button class="cat-pill" data-cat="music">🎵 Music</button>
           <button class="cat-pill" data-cat="moderation">🛡️ Moderation</button>
           <button class="cat-pill" data-cat="leveling">✨ Leveling</button>
           <button class="cat-pill" data-cat="tickets">🎫 Tickets</button>
@@ -220,7 +450,7 @@
     <div class="footer-container">
       <div class="footer-left">
         <strong>Moony Discord SuperBot</strong>
-        <span>Engineered with Node.js, discord.js v14, @discordjs/voice & Express</span>
+        <span>Engineered with Node.js, discord.js v14 & Express</span>
       </div>
       <div class="footer-right">
         <span>© 2026 Moony Engine • All Rights Reserved</span>
@@ -241,7 +471,9 @@
           document.getElementById('botTitle').innerText = data.botName.toUpperCase();
           if (data.botAvatar) document.getElementById('botAvatar').src = data.botAvatar;
           document.getElementById('statGuilds').innerText = data.guildCount.toLocaleString();
-          document.getElementById('statVoice').innerText = data.activeVoiceStreams.toString();
+          if (document.getElementById('statOrders')) {
+            document.getElementById('statOrders').innerText = (data.totalStoreOrders || 0).toString();
+          }
           document.getElementById('statCommands').innerText = data.commandCount.toString();
           document.getElementById('statUptime').innerText = data.uptime;
           document.getElementById('statPing').innerText = `${data.ping} ms`;
@@ -250,67 +482,6 @@
       } catch (e) {
         console.error('Failed to fetch stats:', e);
       }
-    }
-
-    async function fetchMusicStreams() {
-      try {
-        const res = await fetch('/api/music');
-        const data = await res.json();
-        const container = document.getElementById('musicStreamsContainer');
-
-        if (!data.streams || data.streams.length === 0) {
-          container.innerHTML = `
-            <div class="glass-card empty-state">
-              <div class="empty-icon">🎧</div>
-              <h4>No Active Music Streams</h4>
-              <p>Join a voice channel and type <code>/play &lt;song&gt;</code> or <code>/radio</code> to start streaming high-fidelity audio!</p>
-            </div>
-          `;
-          return;
-        }
-
-        container.innerHTML = data.streams.map(s => {
-          const song = s.currentSong;
-          const progressPercent = song.totalTimeSec > 0 ? Math.min(100, Math.round((song.currentTimeSec / song.totalTimeSec) * 100)) : 100;
-          return `
-            <div class="glass-card music-player-card">
-              <div class="player-left">
-                <img src="${song.thumbnail || 'https://cdn-icons-png.flaticon.com/512/174/174872.png'}" class="track-thumb" alt="Track Cover">
-                <div class="track-details">
-                  <div class="server-tag">🏰 ${s.guildName}</div>
-                  <h4 class="track-title">${song.title}</h4>
-                  <div class="track-artist">${song.artist}</div>
-                  <div class="track-meta">Requested by <strong>${song.requester}</strong> • Volume <strong>${s.volume}%</strong></div>
-                </div>
-              </div>
-              <div class="player-right">
-                <div class="playback-bar-wrap">
-                  <div class="playback-bar">
-                    <div class="playback-fill" style="width: ${progressPercent}%"></div>
-                  </div>
-                  <div class="playback-times">
-                    <span>${formatSec(song.currentTimeSec)}</span>
-                    <span>${song.duration || 'Live Stream'}</span>
-                  </div>
-                </div>
-                <div class="player-badge">
-                  <span>${s.paused ? '⏸️ PAUSED' : '▶️ PLAYING'}</span>
-                  <span>• ${s.queueLength} in queue</span>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } catch (e) {
-        console.error('Failed to fetch music streams:', e);
-      }
-    }
-
-    function formatSec(sec) {
-      if (!sec || isNaN(sec)) return '00:00';
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
     }
 
     async function fetchCommands() {
@@ -375,12 +546,292 @@
 
     document.getElementById('commandSearch').addEventListener('input', renderCommands);
 
+    // ==========================================
+    // MINECRAFT STORE & DISCORD VERIFICATION LOGIC
+    // ==========================================
+    let checkDiscordTimeout = null;
+    let latestDiscordAuth = { isValid: true, inGuild: true };
+
+    function checkDiscordAccountDebounced() {
+      clearTimeout(checkDiscordTimeout);
+      updateLiveTicketPreview();
+      checkDiscordTimeout = setTimeout(verifyDiscordAccount, 400);
+    }
+
+    async function verifyDiscordAccount() {
+      const input = document.getElementById('storeDiscord').value.trim();
+      const verifyTag = document.getElementById('verifyTag');
+      const verifyId = document.getElementById('verifyId');
+      const verifyAvatar = document.getElementById('verifyAvatar');
+      const verifyBadge = document.getElementById('verifyBadge');
+
+      if (!input) return;
+
+      try {
+        const res = await fetch(`/api/store/verify-discord?discordInput=${encodeURIComponent(input)}`);
+        const data = await res.json();
+        latestDiscordAuth = data;
+
+        if (data.isValid) {
+          verifyTag.innerText = data.tag || data.username || input;
+          verifyId.innerText = `ID: ${data.id || 'Resolving...'}`;
+          if (data.avatar) verifyAvatar.src = data.avatar;
+
+          if (data.inGuild) {
+            verifyBadge.className = 'verify-badge badge-in-server';
+            verifyBadge.innerText = 'Active Server Member';
+            document.getElementById('previewTicketStatus').innerText = 'TICKET ACTIVE';
+          } else {
+            verifyBadge.className = 'verify-badge badge-not-in-server';
+            verifyBadge.innerText = 'Not In Server (Invite will be sent)';
+            document.getElementById('previewTicketStatus').innerText = 'INVITE DISPATCHED';
+          }
+        } else {
+          verifyTag.innerText = input;
+          verifyId.innerText = 'Account not found';
+          verifyBadge.className = 'verify-badge badge-invalid';
+          verifyBadge.innerText = 'Discord Account Not Found';
+        }
+        updateLiveTicketPreview();
+      } catch (e) {
+        console.error('Verify error:', e);
+      }
+    }
+
+    function handleItemChange() {
+      const select = document.getElementById('storeItem');
+      const selectedOption = select.options[select.selectedIndex];
+      const price = selectedOption.getAttribute('data-price');
+      if (price) {
+        document.getElementById('storePrice').value = price;
+      }
+      updateLiveTicketPreview();
+    }
+
+    function updateLiveTicketPreview() {
+      const ign = document.getElementById('storeIgn').value.trim() || 'Customer';
+      const discord = document.getElementById('storeDiscord').value.trim() || 'rixieplayz';
+      const item = document.getElementById('storeItem').value || 'LEGEND RANK';
+      const price = document.getElementById('storePrice').value || '99';
+      const payment = document.getElementById('storePayment').value || 'UPI (GPay / PhonePe / Paytm / BHIM QR)';
+
+      const channelSlug = `ticket-${ign.toLowerCase().replace(/[^a-z0-9]/g, '')}-2692`;
+      document.getElementById('previewChannelName').innerText = channelSlug;
+      document.getElementById('previewUserMention').innerText = `@${discord}`;
+      document.getElementById('previewCustomerVal').innerText = `${discord} (IGN: ${ign})`;
+      document.getElementById('previewPaymentVal').innerText = payment;
+      document.getElementById('previewItemVal').innerText = `${item} (₹${price})`;
+      document.getElementById('previewTotalVal').innerText = `₹${price}`;
+    }
+
+    async function handleStoreOrderSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitOrder');
+      const resultBox = document.getElementById('orderResultBox');
+
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Processing Order & Validating Discord...';
+
+      const payload = {
+        minecraftIgn: document.getElementById('storeIgn').value.trim(),
+        discordInput: document.getElementById('storeDiscord').value.trim(),
+        itemName: document.getElementById('storeItem').value,
+        totalAmount: parseFloat(document.getElementById('storePrice').value) || 99,
+        paymentMethod: document.getElementById('storePayment').value
+      };
+
+      try {
+        const res = await fetch('/api/store/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        resultBox.style.display = 'block';
+
+        if (data.status === 'ticket_created') {
+          resultBox.style.background = 'rgba(87, 242, 135, 0.12)';
+          resultBox.style.border = '1px solid rgba(87, 242, 135, 0.3)';
+          resultBox.style.color = '#57F287';
+          resultBox.innerHTML = `
+            <strong>✅ Discord Store Ticket Created!</strong><br>
+            Order <strong>${data.order.orderId}</strong> created in ticket channel <code>#${data.order.channelName || 'ticket'}</code>.<br>
+            Staff and user <@${data.discordUser?.id || data.order.resolvedUserId}> were pinged with the Sakura order embed!
+          `;
+        } else if (data.status === 'pending_join') {
+          resultBox.style.background = 'rgba(241, 196, 15, 0.12)';
+          resultBox.style.border = '1px solid rgba(241, 196, 15, 0.3)';
+          resultBox.style.color = '#F1C40F';
+          resultBox.innerHTML = `
+            <strong>⚠️ Customer Outside Server — Invite Sent via DM!</strong><br>
+            Discord account verified as <strong>${data.discordUser?.tag}</strong>. Because they are not currently in the server, Moony sent them a direct message with an invite link: <a href="${data.inviteUrl}" target="_blank" style="color:#fff; text-decoration:underline;">Server Invite</a>.<br>
+            <em>When they join the server, their ticket will automatically open!</em>
+          `;
+        } else {
+          resultBox.style.background = 'rgba(237, 66, 69, 0.12)';
+          resultBox.style.border = '1px solid rgba(237, 66, 69, 0.3)';
+          resultBox.style.color = '#ED4245';
+          resultBox.innerHTML = `<strong>❌ Verification Failed:</strong> ${data.error || 'User could not be resolved'}`;
+        }
+
+        fetchStoreOrders();
+        fetchStats();
+      } catch (err) {
+        resultBox.style.display = 'block';
+        resultBox.style.color = '#ED4245';
+        resultBox.innerHTML = `<strong>❌ Error:</strong> ${err.message}`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🌸 Process Order & Generate Discord Ticket</span>';
+      }
+    }
+
+    async function dispatchTestWebhook(type) {
+      const isMember = type === 'in_server';
+      const sample = {
+        ign: isMember ? 'Rixieplayz' : 'NotYetJoinedUser',
+        discord: isMember ? 'rixieplayz' : '986765517751099507',
+        item: 'LEGEND RANK',
+        price: 99,
+        payment_method: 'UPI (GPay / PhonePe / Paytm / BHIM QR)'
+      };
+
+      try {
+        const res = await fetch('/api/store/webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sample)
+        });
+        const data = await res.json();
+        alert(`Webhook Test Response:\nStatus: ${data.status}\nOrder ID: ${data.order ? data.order.orderId : 'N/A'}\nMessage: ${data.status === 'ticket_created' ? 'Ticket created in server!' : 'Invite dispatched to buyer!'}`);
+        fetchStoreOrders();
+      } catch (e) {
+        alert(`Webhook test error: ${e.message}`);
+      }
+    }
+
+    function copyWebhookUrl() {
+      const url = `${window.location.origin}/api/store/webhook`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`Copied Webhook URL to clipboard:\n${url}\n\nPaste this in your Tebex or CraftingStore webhook settings.`);
+      });
+    }
+
+    async function fetchStoreOrders() {
+      try {
+        const res = await fetch('/api/store/orders');
+        const data = await res.json();
+        const tbody = document.getElementById('storeOrdersTableBody');
+        const orders = data.orders || [];
+
+        document.getElementById('orderCountBadge').innerText = `${orders.length} ORDERS`;
+
+        if (orders.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                No web store orders recorded yet. Process an order above or send a webhook!
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = orders.map(o => {
+          let statusBadge = `<span class="verify-badge badge-in-server">Ticket Created</span>`;
+          if (o.status === 'pending_join') statusBadge = `<span class="verify-badge badge-not-in-server">Pending Join (Invite Sent)</span>`;
+          if (o.status === 'completed') statusBadge = `<span class="verify-badge badge-in-server" style="background:rgba(88,101,242,0.2); color:#5865F2; border-color:#5865F2;">Fulfilled</span>`;
+
+          return `
+            <tr>
+              <td><span class="code-pill">${o.orderId}</span></td>
+              <td><strong>${o.minecraftIgn}</strong></td>
+              <td>
+                <div class="user-cell">
+                  <img src="${o.discordAvatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt="User">
+                  <span>${o.discordTag || o.discordInput}</span>
+                </div>
+              </td>
+              <td>${o.itemName}</td>
+              <td class="embed-price-highlight">${o.currencySymbol || '₹'}${o.totalAmount}</td>
+              <td>${statusBadge}</td>
+              <td>${o.ticketChannelId ? `<span class="code-pill">#${o.channelName || 'ticket'}</span>` : '<span style="color:var(--text-dim);">Waiting for join</span>'}</td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error('Failed to fetch store orders:', e);
+      }
+    }
+
+    // ==========================================
+    // LEVELING NOTIFICATION SETTINGS LOGIC
+    // ==========================================
+    async function fetchLevelingSettings() {
+      try {
+        const res = await fetch('/api/leveling/settings');
+        const data = await res.json();
+        const select = document.getElementById('levelChannelSelect');
+
+        // Keep standard choices and populate text channels
+        let html = `
+          <option value="" ${!data.channelId ? 'selected' : ''}>💬 Current Channel (where user chatted)</option>
+          <option value="dm" ${data.channelId === 'dm' ? 'selected' : ''}>📨 Direct Message (Private DM)</option>
+          <option value="none" ${data.channelId === 'none' ? 'selected' : ''}>🤫 Silent Mode (No announcements)</option>
+        `;
+
+        if (data.channels && data.channels.length > 0) {
+          html += `<optgroup label="Server Text Channels">`;
+          data.channels.forEach(c => {
+            const isSel = data.channelId === c.id ? 'selected' : '';
+            html += `<option value="${c.id}" ${isSel}># ${c.name}</option>`;
+          });
+          html += `</optgroup>`;
+        }
+
+        select.innerHTML = html;
+      } catch (e) {
+        console.error('Failed to fetch leveling settings:', e);
+      }
+    }
+
+    async function saveLevelingSettings() {
+      const select = document.getElementById('levelChannelSelect');
+      const channelId = select.value;
+      const feedback = document.getElementById('levelingFeedback');
+
+      try {
+        const res = await fetch('/api/leveling/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ channelId })
+        });
+        const data = await res.json();
+
+        feedback.style.display = 'block';
+        feedback.style.background = 'rgba(87, 242, 135, 0.15)';
+        feedback.style.color = '#57F287';
+        feedback.style.border = '1px solid rgba(87, 242, 135, 0.3)';
+        feedback.innerHTML = `✅ Level-up announcement channel successfully updated!`;
+        setTimeout(() => { feedback.style.display = 'none'; }, 4000);
+      } catch (e) {
+        feedback.style.display = 'block';
+        feedback.style.background = 'rgba(237, 66, 69, 0.15)';
+        feedback.style.color = '#ED4245';
+        feedback.innerHTML = `❌ Failed to save: ${e.message}`;
+      }
+    }
+
     // Polling intervals
     fetchStats();
-    fetchMusicStreams();
     fetchCommands();
+    fetchStoreOrders();
+    fetchLevelingSettings();
+    verifyDiscordAccount();
+
     setInterval(fetchStats, 5000);
-    setInterval(fetchMusicStreams, 3000);
+    setInterval(fetchStoreOrders, 4000);
   </script>
 </body>
 </html>

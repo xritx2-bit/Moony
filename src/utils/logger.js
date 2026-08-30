@@ -5,8 +5,7 @@ const logLevels = {
   INFO: '\x1b[36m[INFO]\x1b[0m',
   SUCCESS: '\x1b[32m[SUCCESS]\x1b[0m',
   WARN: '\x1b[33m[WARN]\x1b[0m',
-  ERROR: '\x1b[31m[ERROR]\x1b[0m',
-  MUSIC: '\x1b[35m[MUSIC]\x1b[0m'
+  ERROR: '\x1b[31m[ERROR]\x1b[0m'
 };
 
 class Logger {
@@ -24,10 +23,6 @@ class Logger {
 
   static error(message, ...args) {
     console.error(`${new Date().toLocaleTimeString()} ${logLevels.ERROR} ${message}`, ...args);
-  }
-
-  static music(message, ...args) {
-    console.log(`${new Date().toLocaleTimeString()} ${logLevels.MUSIC} ${message}`, ...args);
   }
 
   static async sendModLog(guild, title, description, fields = [], color = colors.info) {

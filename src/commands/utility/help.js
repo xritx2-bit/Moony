@@ -8,24 +8,6 @@ const {
 const colors = require('../../utils/colors');
 
 const CATEGORIES = {
-  music: {
-    emoji: '🎵',
-    name: 'Music & Spotify',
-    desc: 'Spotify-grade music streaming with rich interactive controls, custom playlists & 24/7 web radio',
-    commands: [
-      { name: '/play <query>', desc: 'Stream songs, Spotify links (track/album/playlist), or YouTube URLs' },
-      { name: '/pause & /resume', desc: 'Pause or unpause music playback' },
-      { name: '/skip & /previous', desc: 'Skip to next track or jump back to previous song' },
-      { name: '/queue', desc: 'View current playlist queue with durations and ETA' },
-      { name: '/nowplaying', desc: 'Open the interactive Spotify visual controller' },
-      { name: '/loop [mode]', desc: 'Toggle track loop, queue loop, or normal playback' },
-      { name: '/shuffle', desc: 'Shuffle all upcoming queued tracks' },
-      { name: '/volume <percent>', desc: 'Set playback volume (1-150%)' },
-      { name: '/stop', desc: 'Stop music, clear queue, and leave voice channel' },
-      { name: '/radio <station>', desc: 'Play 24/7 web radio (Lo-Fi, Chill, Synthwave, EDM, Pop, Anime)' },
-      { name: '/playlist <save|play|list|delete>', desc: 'Manage your custom playlists' }
-    ]
-  },
   moderation: {
     emoji: '🛡️',
     name: 'Moderation & Safety',
@@ -137,7 +119,7 @@ module.exports = {
       })
       .setTitle('✨ Welcome to Moony!')
       .setDescription(
-        `**Moony** is the ultimate all-in-one Discord SuperBot featuring Spotify-Grade Music, Auto-Moderation, Gamification & Leveling, Tickets, Automated Feeds, and AI.\n\n` +
+        `**Moony** is the ultimate all-in-one Discord SuperBot featuring Auto-Moderation, Gamification & Leveling, Tickets & Minecraft Store Automation, Automated Feeds, and AI.\n\n` +
         `**Select a category below** to view all available commands and detailed usage!`
       )
       .addFields(

@@ -56,15 +56,6 @@ class Embeds {
       color: colors.info
     });
   }
-
-  static spotify(title, description, thumbnail) {
-    return this.base({
-      title: `🎵 ${title}`,
-      description,
-      color: colors.spotify,
-      thumbnail
-    });
-  }
 }
 
 module.exports = Embeds;

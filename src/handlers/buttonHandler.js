@@ -6,7 +6,6 @@ const {
   ButtonBuilder,
   ButtonStyle
 } = require('discord.js');
-const { getGuildQueue } = require('../utils/musicPlayer');
 const db = require('../database/db');
 const colors = require('../utils/colors');
 const Logger = require('../utils/logger');
@@ -16,121 +15,7 @@ class ButtonHandler {
     const { customId, guild, member, user, channel } = interaction;
 
     // ==========================================
-    // 1. SPOTIFY MUSIC CONTROLLER BUTTONS
-    // ==========================================
-    if (customId.startsWith('music_')) {
-      const queue = getGuildQueue(guild.id);
-      if (!queue || !queue.currentSong) {
-        return interaction.reply({
-          content: '❌ No music is currently playing.',
-          ephemeral: true
-        });
-      }
-
-      // Check voice channel
-      if (!member.voice.channel || member.voice.channel.id !== queue.voiceChannel.id) {
-        return interaction.reply({
-          content: '❌ You must be in the same voice channel as the bot to control music.',
-          ephemeral: true
-        });
-      }
-
-      switch (customId) {
-        case 'music_toggle':
-          if (queue.paused) {
-            queue.resume();
-            await interaction.reply({ content: '▶️ Resumed music playback.', ephemeral: true });
-          } else {
-            queue.pause();
-            await interaction.reply({ content: '⏸️ Paused music playback.', ephemeral: true });
-          }
-          queue.sendNowPlayingEmbed();
-          break;
-
-        case 'music_skip':
-          queue.skip();
-          await interaction.reply({ content: '⏭️ Skipped to the next track.', ephemeral: true });
-          break;
-
-        case 'music_prev':
-          const hasPrev = queue.previous();
-          if (hasPrev) {
-            await interaction.reply({ content: '⏮️ Playing previous track.', ephemeral: true });
-          } else {
-            await interaction.reply({ content: '❌ No previous track in history.', ephemeral: true });
-          }
-          break;
-
-        case 'music_loop':
-          const loopMode = queue.toggleLoop();
-          const loopLabels = ['Off', '🔂 Loop Track', '🔁 Loop Queue'];
-          await interaction.reply({ content: `🔁 Loop mode set to: **${loopLabels[loopMode]}**`, ephemeral: true });
-          queue.sendNowPlayingEmbed();
-          break;
-
-        case 'music_shuffle':
-          const shuffled = queue.shuffle();
-          if (shuffled) {
-            await interaction.reply({ content: '🔀 Shuffled the upcoming music queue!', ephemeral: true });
-          } else {
-            await interaction.reply({ content: '❌ Not enough tracks in queue to shuffle.', ephemeral: true });
-          }
-          break;
-
-        case 'music_volup':
-          queue.setVolume(queue.volume + 10);
-          await interaction.reply({ content: `🔊 Volume increased to **${queue.volume}%**`, ephemeral: true });
-          queue.sendNowPlayingEmbed();
-          break;
-
-        case 'music_voldown':
-          queue.setVolume(queue.volume - 10);
-          await interaction.reply({ content: `🔉 Volume decreased to **${queue.volume}%**`, ephemeral: true });
-          queue.sendNowPlayingEmbed();
-          break;
-
-        case 'music_queue':
-          const qTracks = queue.songs.slice(0, 10);
-          const qList = qTracks.map((t, idx) => `\`${idx + 1}.\` **${t.spotifyTitle || t.title}** (${t.formattedDuration}) - <@${t.requester.id}>`).join('\n');
-          const qEmbed = new EmbedBuilder()
-            .setColor(colors.spotify)
-            .setTitle(`📜 Current Music Queue (${queue.songs.length} tracks)`)
-            .setDescription(qList || 'No tracks in queue.')
-            .setFooter({ text: `Total Duration: ~${Math.floor(queue.songs.reduce((acc, s) => acc + (s.duration || 0), 0) / 60)} mins` });
-
-          await interaction.reply({ embeds: [qEmbed], ephemeral: true });
-          break;
-
-        case 'music_like':
-          const current = queue.currentSong;
-          if (current) {
-            const userPl = db.getUserPlaylist(user.id, 'Favorites') || { tracks: [] };
-            const existing = userPl.tracks.some(t => t.title === current.title);
-            if (!existing) {
-              userPl.tracks.push({
-                title: current.title,
-                url: current.url,
-                duration: current.duration,
-                formattedDuration: current.formattedDuration
-              });
-              db.saveUserPlaylist(user.id, 'Favorites', userPl.tracks);
-              await interaction.reply({ content: `💖 Saved **${current.title}** to your Spotify \`Favorites\` playlist! Use \`/playlist play name: Favorites\` anytime.`, ephemeral: true });
-            } else {
-              await interaction.reply({ content: `💖 **${current.title}** is already in your \`Favorites\` playlist!`, ephemeral: true });
-            }
-          }
-          break;
-
-        case 'music_stop':
-          queue.destroy();
-          await interaction.reply({ content: '⏹️ Stopped music playback and left the voice channel.', ephemeral: true });
-          break;
-      }
-      return;
-    }
-
-    // ==========================================
-    // 2. TICKETING SYSTEM BUTTONS
+    // 1. TICKETING SYSTEM BUTTONS
     // ==========================================
     if (customId.startsWith('ticket_open_')) {
       const category = customId.replace('ticket_open_', '');
@@ -180,6 +65,45 @@ class ButtonHandler {
         .setDescription(`🙋 **Ticket Claimed!** <@${user.id}> is now assisting you.`);
 
       await interaction.reply({ embeds: [claimEmbed] });
+      return;
+    }
+
+    if (customId.startsWith('ticket_order_fulfill')) {
+      const isStaff = member.permissions.has(PermissionFlagsBits.ManageMessages) ||
+        member.permissions.has(PermissionFlagsBits.Administrator) ||
+        member.roles.cache.some(r => r.name.toLowerCase().includes('staff') || r.name.toLowerCase().includes('admin') || r.name.toLowerCase().includes('mod'));
+
+      if (!isStaff) {
+        return interaction.reply({
+          content: '❌ Only staff members can mark this store order as paid and fulfilled.',
+          ephemeral: true
+        });
+      }
+
+      const orderId = customId.replace('ticket_order_fulfill_', '');
+      const order = db.getStoreOrder(orderId);
+
+      if (order) {
+        db.updateStoreOrder(order.orderId, {
+          status: 'completed',
+          fulfilledBy: user.id,
+          fulfilledAt: Date.now()
+        });
+      }
+
+      const fulfillEmbed = new EmbedBuilder()
+        .setColor(colors.success)
+        .setTitle('✅ Store Order Completed & Delivered!')
+        .setDescription(
+          `This purchase order has been **verified, paid, and fulfilled in-game** by <@${user.id}>!\n\n` +
+          `• **Order Reference:** \`${order ? order.orderId : orderId}\`\n` +
+          `• **Minecraft IGN:** \`${order ? order.minecraftIgn : 'Customer'}\`\n` +
+          `• **Staff Assigned:** <@${user.id}>\n\n` +
+          `*Thank you for supporting the server! Enjoy your in-game perks.*`
+        )
+        .setTimestamp();
+
+      await interaction.reply({ embeds: [fulfillEmbed] });
       return;
     }
 

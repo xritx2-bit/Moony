@@ -33,7 +33,7 @@ module.exports = {
         { name: '💾 Memory Usage', value: `\`${memUsage} MB / ${totalMem} GB\``, inline: true },
         { name: '⚙️ Node.js / discord.js', value: `\`${process.version} / v${djsVersion}\``, inline: true },
         { name: '💻 Host OS', value: `\`${os.type()} (${os.arch()})\``, inline: true },
-        { name: '🎵 Music Engine', value: '`@discordjs/voice + Spotify Public API`', inline: true }
+        { name: '🛒 Store Engine', value: '`Sakura Tickets & Webhooks`', inline: true }
       )
       .setFooter({ text: 'Moony Discord SuperBot • High Availability' })
       .setTimestamp();

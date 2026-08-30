@@ -4,8 +4,6 @@ const AIParser = require('../../utils/aiParser');
 const colors = require('../../utils/colors');
 const Logger = require('../../utils/logger');
 const config = require('../../config');
-const { createGuildQueue, getGuildQueue } = require('../../utils/musicPlayer');
-const SpotifyResolver = require('../../utils/spotifyResolver');
 
 // In-memory spam, cooldown and DM tracking
 const userMessageTimes = new Map(); // userId -> timestamp[]
@@ -138,24 +136,44 @@ module.exports = {
           // Check for Role Rewards
           const roleRewards = settings.leveling.roleRewards || {};
           const rewardRoleId = roleRewards[newLevel.toString()];
+          let roleUnlockedName = null;
           if (rewardRoleId) {
             const role = message.guild.roles.cache.get(rewardRoleId);
             if (role && message.member) {
-              message.member.roles.add(role).catch(() => {});
+              await message.member.roles.add(role).catch(() => {});
+              roleUnlockedName = role.name;
             }
           }
 
-          const targetChannel = settings.leveling.channelId
-            ? message.guild.channels.cache.get(settings.leveling.channelId) || message.channel
-            : message.channel;
+          const desc = roleUnlockedName
+            ? `Congratulations <@${userId}>! You advanced to **Level ${newLevel}**! ✨\n🎁 **Role Unlocked:** \`${roleUnlockedName}\``
+            : `Congratulations <@${userId}>! You advanced to **Level ${newLevel}**! ✨`;
 
           const levelEmbed = new EmbedBuilder()
             .setColor(colors.level)
-            .setTitle('🎉 Level Up!')
-            .setDescription(`Congratulations <@${userId}>! You advanced to **Level ${newLevel}**! ✨`)
-            .setFooter({ text: 'Keep chatting to earn more XP and climb the leaderboard!' });
+            .setTitle('🎉 Level Up Announcement')
+            .setDescription(desc)
+            .setThumbnail(message.author.displayAvatarURL({ dynamic: true }))
+            .setFooter({ text: 'Keep chatting to earn more XP and climb the leaderboard!' })
+            .setTimestamp();
 
-          targetChannel.send({ embeds: [levelEmbed] }).catch(() => {});
+          if (settings.leveling.channelId === 'dm') {
+            message.author.send({ embeds: [levelEmbed] }).catch(() => {});
+          } else if (settings.leveling.channelId === 'none') {
+            // Silent leveling
+          } else if (settings.leveling.channelId) {
+            const specificChannel = message.guild.channels.cache.get(settings.leveling.channelId);
+            if (specificChannel && specificChannel.isTextBased()) {
+              specificChannel.send({
+                content: `🎊 <@${userId}> has leveled up!`,
+                embeds: [levelEmbed]
+              }).catch(() => {});
+            } else {
+              message.channel.send({ content: `<@${userId}>`, embeds: [levelEmbed] }).catch(() => {});
+            }
+          } else {
+            message.channel.send({ content: `<@${userId}>`, embeds: [levelEmbed] }).catch(() => {});
+          }
         }
       }
     }
@@ -173,48 +191,7 @@ module.exports = {
 
       const parsed = AIParser.parseCommandIntent(cleanContent);
 
-      // Handle direct parsed intent if applicable
-      if (parsed.intent === 'music_play' && parsed.query) {
-        if (!message.member.voice.channel) {
-          return message.reply('❌ You must join a voice channel first to play music!').catch(() => {});
-        }
-        const queue = createGuildQueue(guildId, message.channel, message.member.voice.channel);
-        const track = await SpotifyResolver.searchYouTubeTrack(parsed.query, message.author);
-        if (track) {
-          queue.songs.push(track);
-          await message.reply(`🎵 Queued **${track.title}** via AI natural command!`).catch(() => {});
-          if (!queue.playing) queue.play();
-        } else {
-          await message.reply(`❌ Could not find track for \`${parsed.query}\``).catch(() => {});
-        }
-        return;
-      }
-
-      if (parsed.intent === 'music_skip') {
-        const queue = getGuildQueue(guildId);
-        if (queue) {
-          queue.skip();
-          return message.reply('⏭️ Skipped current song via AI trigger.').catch(() => {});
-        }
-      }
-
-      if (parsed.intent === 'music_pause') {
-        const queue = getGuildQueue(guildId);
-        if (queue) {
-          queue.pause();
-          return message.reply('⏸️ Paused music playback.').catch(() => {});
-        }
-      }
-
-      if (parsed.intent === 'music_resume') {
-        const queue = getGuildQueue(guildId);
-        if (queue) {
-          queue.resume();
-          return message.reply('▶️ Resumed music playback.').catch(() => {});
-        }
-      }
-
-      if (parsed.intent === 'chat' || parsed.intent.startsWith('mod_')) {
+      if (parsed.intent === 'chat' || parsed.intent.startsWith('mod_') || parsed.intent.startsWith('level_') || parsed.intent.startsWith('eco_')) {
         await message.channel.sendTyping().catch(() => {});
         const reply = await AIParser.chat(cleanContent, { userId, guildId });
         await message.reply({ content: reply ? reply.slice(0, 2000) : 'I hear you!' }).catch(() => {});

@@ -3,12 +3,20 @@ const db = require('../../database/db');
 const CanvasRank = require('../../utils/canvasRank');
 const colors = require('../../utils/colors');
 const Logger = require('../../utils/logger');
+const StoreManager = require('../../utils/storeManager');
 
 module.exports = {
   name: 'guildMemberAdd',
   async execute(member, client) {
     const guildId = member.guild.id;
     const settings = db.getGuildSettings(guildId);
+
+    // 0. Automatic Minecraft Web Store Ticket Processing for joined member
+    if (!member.user.bot) {
+      await StoreManager.processPendingOrdersForMember(member).catch(err => {
+        Logger.error('Failed to process pending store orders on member join:', err.message);
+      });
+    }
 
     // 1. Auto-Role Assignment
     if (!member.user.bot && settings.welcome.autoRoleId) {
@@ -58,7 +66,7 @@ module.exports = {
             `Hey **${member.user.username}**, we are thrilled to have you in our community!\n\n` +
             `• Check out the server rules and channels.\n` +
             `• Use \`/help\` in the server to see all Moony SuperBot features!\n` +
-            `• Join a voice channel and type \`/play\` to listen to Spotify music!`
+            `• Check out our automated store tickets and server leveling perks!`
           )
           .setThumbnail(member.guild.iconURL({ dynamic: true }) || undefined)
           .setTimestamp();

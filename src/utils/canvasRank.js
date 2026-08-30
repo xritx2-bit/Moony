@@ -15,7 +15,7 @@ class CanvasRank {
     const avatar = avatarUrl || 'https://cdn.discordapp.com/embed/avatars/0.png';
 
     const svg = `
-    <svg width="${width}" height="${height}" viewBox="0 0 ${width}" ${height}" xmlns="http://www.w3.org/2000/svg">
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <!-- Background Gradient -->
         <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">

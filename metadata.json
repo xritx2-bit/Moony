@@ -1,0 +1,6 @@
+{
+  "name": "Moony Discord SuperBot",
+  "description": "Moony Discord SuperBot Web Dashboard - Moderation, Leveling, Minecraft Store Tickets, Feeds, and AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

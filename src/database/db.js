@@ -10,8 +10,8 @@ const DEFAULT_STATE = {
   users: {},
   warnings: {},
   tickets: {},
+  storeOrders: {},
   reactionRoles: {},
-  playlists: {},
   reminders: [],
   feeds: []
 };
@@ -101,6 +101,18 @@ class Database {
           logChannelId: null,
           staffRoleId: null,
           counter: 0
+        },
+        store: {
+          enabled: true,
+          storeName: 'Melix MC Store',
+          currency: 'INR',
+          currencySymbol: '₹',
+          staffRoleId: null,
+          categoryId: null,
+          logChannelId: null,
+          inviteUrl: null,
+          webhookSecret: 'moony_store_secret',
+          paymentDetails: 'UPI (GPay / PhonePe / Paytm / BHIM QR)'
         },
         music: {
           defaultVolume: 80,
@@ -250,6 +262,56 @@ class Database {
     return ticket;
   }
 
+  // --- MINECRAFT WEB STORE ORDERS ---
+  saveStoreOrder(order) {
+    if (!this.data.storeOrders) this.data.storeOrders = {};
+    const orderKey = order.orderId;
+    this.data.storeOrders[orderKey] = {
+      ...order,
+      updatedAt: Date.now()
+    };
+    this.scheduleSave();
+    return this.data.storeOrders[orderKey];
+  }
+
+  getStoreOrder(orderId) {
+    if (!this.data.storeOrders) return null;
+    const formatted = orderId.startsWith('#') ? orderId : `#${orderId}`;
+    return this.data.storeOrders[formatted] || this.data.storeOrders[orderId] || null;
+  }
+
+  getStoreOrders(guildId = null) {
+    if (!this.data.storeOrders) return [];
+    const orders = Object.values(this.data.storeOrders);
+    if (guildId) {
+      return orders.filter(o => o.guildId === guildId).sort((a, b) => b.createdAt - a.createdAt);
+    }
+    return orders.sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  updateStoreOrder(orderId, updates) {
+    const order = this.getStoreOrder(orderId);
+    if (order) {
+      Object.assign(order, updates, { updatedAt: Date.now() });
+      this.scheduleSave();
+      return order;
+    }
+    return null;
+  }
+
+  getPendingStoreOrdersForUser(guildId, userId, username) {
+    if (!this.data.storeOrders) return [];
+    const lowerUser = username ? username.toLowerCase() : '';
+    return Object.values(this.data.storeOrders).filter(o => {
+      if (o.status !== 'pending_join' && o.status !== 'unverified_discord') return false;
+      if (guildId && o.guildId !== guildId) return false;
+      
+      const idMatch = o.resolvedUserId === userId || o.discordInput === userId;
+      const nameMatch = o.discordInput && o.discordInput.toLowerCase().includes(lowerUser);
+      return idMatch || nameMatch;
+    });
+  }
+
   // --- REACTION / BUTTON ROLES ---
   saveReactionRole(messageId, roleData) {
     this.data.reactionRoles[messageId] = roleData;
@@ -258,40 +320,6 @@ class Database {
 
   getReactionRole(messageId) {
     return this.data.reactionRoles[messageId] || null;
-  }
-
-  // --- SAVED SPOTIFY PLAYLISTS ---
-  saveUserPlaylist(userId, name, tracks) {
-    if (!this.data.playlists[userId]) {
-      this.data.playlists[userId] = {};
-    }
-    this.data.playlists[userId][name.toLowerCase()] = {
-      name,
-      tracks,
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    };
-    this.scheduleSave();
-    return this.data.playlists[userId][name.toLowerCase()];
-  }
-
-  getUserPlaylists(userId) {
-    return this.data.playlists[userId] || {};
-  }
-
-  getUserPlaylist(userId, name) {
-    const userPls = this.getUserPlaylists(userId);
-    return userPls[name.toLowerCase()] || null;
-  }
-
-  deleteUserPlaylist(userId, name) {
-    const userPls = this.getUserPlaylists(userId);
-    if (userPls[name.toLowerCase()]) {
-      delete userPls[name.toLowerCase()];
-      this.scheduleSave();
-      return true;
-    }
-    return false;
   }
 
   // --- REMINDERS & SCHEDULES ---

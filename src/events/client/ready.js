@@ -15,9 +15,9 @@ module.exports = {
 
     // Dynamic rotating bot activity statuses
     const activities = [
-      { name: '/help | 🎵 Spotify Music', type: ActivityType.Listening },
-      { name: `${client.guilds.cache.size} servers | /play`, type: ActivityType.Watching },
-      { name: 'Lo-Fi 24/7 | /radio', type: ActivityType.Listening },
+      { name: '/help | 🛡️ Security & Setup', type: ActivityType.Listening },
+      { name: `${client.guilds.cache.size} servers | 🌸 Melix MC Store`, type: ActivityType.Watching },
+      { name: 'Store Tickets | /store-order', type: ActivityType.Watching },
       { name: 'Moony AI Assistant | /ask', type: ActivityType.Playing },
       { name: 'Leaderboard | /rank', type: ActivityType.Competing }
     ];

@@ -39,8 +39,9 @@ module.exports = {
           name: '✨ Leveling & Gamification',
           value:
             `• **Status:** ${settings.leveling.enabled ? '✅ Enabled' : '❌ Disabled'}\n` +
+            `• **Announcement Channel:** ${settings.leveling.channelId ? (settings.leveling.channelId === 'dm' ? '📨 Direct Messages' : settings.leveling.channelId === 'none' ? '🤫 Silent' : `<#${settings.leveling.channelId}>`) : '💬 Current Channel'}\n` +
             `• **Role Rewards:** \`${Object.keys(settings.leveling.roleRewards || {}).length} configured\`\n` +
-            `*Configure:* \`/rolereward\` and \`/rank\``,
+            `*Configure:* \`/setlevelchannel\`, \`/rolereward\` and \`/rank\``,
           inline: false
         },
         {
@@ -49,6 +50,16 @@ module.exports = {
             `• **Category:** ${settings.tickets.categoryId ? `<#${settings.tickets.categoryId}>` : 'Default'}\n` +
             `• **Staff Role:** ${settings.tickets.staffRoleId ? `<@&${settings.tickets.staffRoleId}>` : 'None'}\n` +
             `*Configure:* \`/ticket-panel\``,
+          inline: false
+        },
+        {
+          name: '🛒 Minecraft Web Store & Tickets',
+          value:
+            `• **Store Name:** \`${settings.store?.storeName || 'Melix MC Store'}\`\n` +
+            `• **Currency:** \`${settings.store?.currencySymbol || '₹'} (${settings.store?.currency || 'INR'})\`\n` +
+            `• **Staff Role:** ${settings.store?.staffRoleId ? `<@&${settings.store.staffRoleId}>` : 'Default Staff'}\n` +
+            `• **Webhook:** \`POST /api/store/webhook\`\n` +
+            `*Configure:* \`/store-setup\` and \`/store-order\``,
           inline: false
         }
       )
