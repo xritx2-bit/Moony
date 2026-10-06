@@ -267,12 +267,57 @@ function startDashboard(client, port = 3000) {
   });
 
   const server = app.listen(port, '0.0.0.0', () => {
-    Logger.success(`🌐 Moony Web Dashboard online at http://localhost:${port}`);
-    Logger.success(`⚡ 24/7 Keep-Alive ready for UptimeRobot: http://localhost:${port}/ping`);
+    printHealthBanner(port);
   });
 
   return { app, server };
 }
 
-module.exports = { startDashboard };
+function getPublicUrl(port) {
+  if (process.env.RENDER_EXTERNAL_URL) {
+    return process.env.RENDER_EXTERNAL_URL;
+  }
+  if (process.env.REPLIT_DEV_DOMAIN) {
+    return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+  }
+  if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+    return `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`;
+  }
+  if (process.env.RAILWAY_STATIC_URL) {
+    return `https://${process.env.RAILWAY_STATIC_URL}`;
+  }
+  if (process.env.PROJECT_DOMAIN) {
+    return `https://${process.env.PROJECT_DOMAIN}.glitch.me`;
+  }
+  if (process.env.KEEP_ALIVE_URL) {
+    return process.env.KEEP_ALIVE_URL;
+  }
+  return null;
+}
+
+function printHealthBanner(port) {
+  const publicUrl = getPublicUrl(port);
+  const border = '═'.repeat(64);
+  console.log(`\n╔${border}╗`);
+  if (publicUrl) {
+    const cleanUrl = publicUrl.replace(/\/$/, '');
+    console.log(`║ ⚡ 24/7 UPTIMEROBOT HEALTH LINK:`.padEnd(65) + '║');
+    console.log(`║ 👉 ${cleanUrl}/ping`.padEnd(65) + '║');
+    console.log(`║ 👉 Web Dashboard: ${cleanUrl}`.padEnd(65) + '║');
+    console.log(`║ (Copy the /ping URL above into your UptimeRobot HTTP monitor!)`.padEnd(65) + '║');
+  } else {
+    console.log(`║ ⚡ 24/7 KEEP-ALIVE SERVER ACTIVE ON PORT ${port}`.padEnd(65) + '║');
+    console.log(`║ 👉 Local Test URL: http://localhost:${port}/ping`.padEnd(65) + '║');
+    console.log(`║`.padEnd(65) + '║');
+    console.log(`║ 📌 HOW TO GET YOUR 24/7 UPTIMEROBOT LINK:`.padEnd(65) + '║');
+    console.log(`║ • On RENDER: Check your Render Web Service dashboard for your`.padEnd(65) + '║');
+    console.log(`║   URL and add /ping (e.g. https://moony-xxxx.onrender.com/ping)`.padEnd(65) + '║');
+    console.log(`║ • On REPLIT: Look at the "Webview" window at top-right,`.padEnd(65) + '║');
+    console.log(`║   copy that URL and add /ping (e.g. https://<url>/ping)`.padEnd(65) + '║');
+    console.log(`║ • On KOYEB: Copy your Public Domain from settings + /ping`.padEnd(65) + '║');
+  }
+  console.log(`╚${border}╝\n`);
+}
+
+module.exports = { startDashboard, getPublicUrl };
 
