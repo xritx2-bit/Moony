@@ -11,6 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/discord.js-v14.18.0-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="discord.js" />
   <img src="https://img.shields.io/badge/Node.js-v18+-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/UptimeRobot-24%2F7_Online-success?style=for-the-badge&logo=uptimerobot&logoColor=white" alt="UptimeRobot 24/7" />
   <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/Created_By-RixiePlayz-1DB954?style=for-the-badge&logo=spotify&logoColor=white" alt="Creator" />
 </p>
@@ -125,8 +126,22 @@ node src/index.js
 node --watch src/index.js
 ```
 
-### 6. Open Web Dashboard
-Visit [http://localhost:3000](http://localhost:3000) in your web browser!
+### 6. Open Web Dashboard & Health Check
+Visit [http://localhost:3000](http://localhost:3000) for the dashboard, or [http://localhost:3000/ping](http://localhost:3000/ping) for the health check!
+
+---
+
+## 🌐 24/7 Free Hosting with UptimeRobot
+
+Moony comes pre-configured with everything needed to run **24/7 for free** on platforms like **Render**, **Replit**, **Koyeb**, or a **VPS**:
+
+1. **Deploy Moony** to Render (using `render.yaml`), Replit (using `.replit`), or Docker.
+2. **Copy your Public URL** (e.g. `https://your-bot.onrender.com`).
+3. **Add an HTTP(s) Monitor on [UptimeRobot](https://uptimerobot.com)**:
+   - **URL**: `https://your-bot.onrender.com/ping`
+   - **Interval**: `Every 5 minutes`
+
+👉 **Check out the full walkthrough: [UPTIME_ROBOT_GUIDE.md](UPTIME_ROBOT_GUIDE.md)** for step-by-step instructions, Discord Developer Portal intent configuration, and troubleshooting!
 
 ---
 

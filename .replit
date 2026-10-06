@@ -1,0 +1,14 @@
+run = "npm start"
+entrypoint = "src/index.js"
+hidden = [".git", "node_modules"]
+
+[nix]
+channel = "stable-23_11"
+
+[deployment]
+run = ["node", "src/index.js"]
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 3000
+externalPort = 80

@@ -18,6 +18,34 @@ function startDashboard(client, port = 3000) {
     return client.guilds.cache.first() || null;
   };
 
+  // ==========================================
+  // ⚡ 24/7 UptimeRobot & Healthcheck Endpoints
+  // ==========================================
+  app.head('/', (req, res) => {
+    res.status(200).end();
+  });
+
+  app.all(['/ping', '/health', '/healthz', '/status', '/uptime', '/keepalive'], (req, res) => {
+    const uptimeSec = Math.floor(process.uptime());
+    const days = Math.floor(uptimeSec / 86400);
+    const hours = Math.floor((uptimeSec % 86400) / 3600);
+    const minutes = Math.floor((uptimeSec % 3600) / 60);
+
+    res.status(200).json({
+      status: 'online',
+      message: 'Moony Discord Bot is online 24/7!',
+      bot: client.user ? client.user.tag : 'Moony (Connected)',
+      wsPing: Math.round(client.ws?.ping || 0),
+      uptime: `${days}d ${hours}h ${minutes}m`,
+      uptimeSeconds: uptimeSec,
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  app.all('/ping/text', (req, res) => {
+    res.status(200).send('OK - Moony is 24/7 Online');
+  });
+
   // REST API: Live Bot Stats & Diagnostics
   app.get('/api/stats', (req, res) => {
     try {
@@ -238,9 +266,12 @@ function startDashboard(client, port = 3000) {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 
-  app.listen(port, '0.0.0.0', () => {
+  const server = app.listen(port, '0.0.0.0', () => {
     Logger.success(`🌐 Moony Web Dashboard online at http://localhost:${port}`);
+    Logger.success(`⚡ 24/7 Keep-Alive ready for UptimeRobot: http://localhost:${port}/ping`);
   });
+
+  return { app, server };
 }
 
 module.exports = { startDashboard };

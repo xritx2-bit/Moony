@@ -58,11 +58,17 @@ client.once('ready', async () => {
   }
 });
 
-// Launch the built-in Web Dashboard
+// Launch the built-in Web Dashboard & 24/7 Keep-Alive server
 try {
   startDashboard(client, config.port || 3000);
 } catch (dashErr) {
   Logger.error('Failed to start web dashboard:', dashErr.message);
+  try {
+    const keepAlive = require('../keep_alive');
+    keepAlive(config.port || 3000);
+  } catch (fallbackErr) {
+    Logger.error('Failed to start fallback keep-alive server:', fallbackErr.message);
+  }
 }
 
 // Error handling & process safety

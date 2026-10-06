@@ -6,9 +6,13 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node src/index.js",
+    "keep-alive": "node keep_alive.js",
     "build": "echo 'Build complete'",
     "lint": "node -e 'console.log(\"Lint checks passed\")'",
     "deploy-commands": "node src/deploy-commands.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "keywords": [
     "discord-bot",
