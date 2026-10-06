@@ -49,6 +49,15 @@ try {
 CommandHandler.load(client);
 EventHandler.load(client);
 
+// Report AI Engine status
+if (config.geminiKey) {
+  Logger.success(`✨ Gemini AI Engine: ACTIVE (Key: ${config.geminiKey.slice(0, 6)}...${config.geminiKey.slice(-4)})`);
+} else if (config.openaiKey) {
+  Logger.success(`✨ OpenAI Engine: ACTIVE`);
+} else {
+  Logger.info(`ℹ️ AI Engine: Free Web Search fallback (Set GEMINI_API_KEY in .env for Gemini AI)`);
+}
+
 // Automatically register/sync slash commands with Discord upon ready
 client.once('ready', async () => {
   try {

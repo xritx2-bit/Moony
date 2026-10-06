@@ -1,16 +1,48 @@
 require('dotenv').config();
 
+function cleanEnv(val) {
+  if (!val) return '';
+  return String(val).trim().replace(/^["']|["']$/g, '').trim();
+}
+
 module.exports = {
-  token: process.env.DISCORD_TOKEN || '',
-  clientId: process.env.CLIENT_ID || '',
-  guildId: process.env.GUILD_ID || '',
-  ownerId: process.env.OWNER_ID || '',
-  prefix: process.env.DEFAULT_PREFIX || '!',
-  port: parseInt(process.env.PORT, 10) || 3000,
+  get token() {
+    return cleanEnv(process.env.DISCORD_TOKEN);
+  },
+  get clientId() {
+    return cleanEnv(process.env.CLIENT_ID);
+  },
+  get guildId() {
+    return cleanEnv(process.env.GUILD_ID);
+  },
+  get ownerId() {
+    return cleanEnv(process.env.OWNER_ID);
+  },
+  get prefix() {
+    return process.env.DEFAULT_PREFIX || '!';
+  },
+  get port() {
+    return parseInt(process.env.PORT, 10) || 3000;
+  },
   
-  // AI Keys
-  geminiKey: process.env.GEMINI_API_KEY || '',
-  openaiKey: process.env.OPENAI_API_KEY || '',
+  // AI Keys (Supports all common naming conventions and auto-cleans quotes/spaces)
+  get geminiKey() {
+    return cleanEnv(
+      process.env.GEMINI_API_KEY ||
+      process.env.GEMINI_KEY ||
+      process.env.GOOGLE_API_KEY ||
+      process.env.GOOGLE_GEMINI_KEY ||
+      process.env.GEMINI_TOKEN ||
+      ''
+    );
+  },
+  get openaiKey() {
+    return cleanEnv(
+      process.env.OPENAI_API_KEY ||
+      process.env.OPENAI_KEY ||
+      ''
+    );
+  },
 
   // Bot Appearance & Defaults
   bot: {

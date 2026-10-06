@@ -146,28 +146,19 @@ class AIParser {
       );
     }
 
-    // 2. Try Gemini API (if key provided)
+    // 2. Try Gemini API (Primary AI Engine when key is provided)
     if (config.geminiKey) {
-      try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${config.geminiKey}`;
-        const body = {
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text: `You are Moony, a cheerful Discord bot created by RixiePlayz (who loves Minecraft, Free Fire & gaming). Help the user with: ${clean}. Keep response concise and in Discord Markdown.`
-                }
-              ]
-            }
-          ]
-        };
-        const res = await axios.post(url, body, { timeout: 8000 });
-        const answer = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (answer) return answer;
-      } catch (err) {
-        Logger.error('Gemini AI error:', err.message);
+      const gemini = await this.callGemini(clean);
+      if (gemini && gemini.success) {
+        return gemini.text;
       }
+
+      // If user supplied a Gemini key, report the exact Google error instead of silently falling back to Wikipedia
+      Logger.error(`Gemini API Error for key [${config.geminiKey.slice(0, 6)}...]:`, gemini?.error);
+      return (
+        `⚠️ **Google Gemini AI Error:**\n> \`${gemini?.error || 'Unable to connect to Google Gemini API'}\`\n\n` +
+        `💡 *Please verify your \`GEMINI_API_KEY\` in your environment settings or at [Google AI Studio](https://aistudio.google.com/).*`
+      );
     }
 
     // 3. Try OpenAI API (if key provided)
@@ -187,19 +178,19 @@ class AIParser {
           },
           {
             headers: { Authorization: `Bearer ${config.openaiKey}` },
-            timeout: 8000
+            timeout: 10000
           }
         );
         const ans = res.data?.choices?.[0]?.message?.content;
         if (ans) return ans;
       } catch (err) {
-        Logger.error('OpenAI error:', err.message);
+        Logger.error('OpenAI error:', err.response?.data?.error?.message || err.message);
+        return `⚠️ **OpenAI Error:**\n> \`${err.response?.data?.error?.message || err.message}\``;
       }
     }
 
-    // 4. Live Internet Knowledge & Web Search (Works completely FREE without API keys!)
+    // 4. Free Fallback: Live Internet Knowledge & Web Search (ONLY when no AI API keys are configured)
     try {
-      // Strip conversational filler like "moony what is" / "can you tell me"
       const searchTopic = clean
         .replace(/^(?:moony|bot|hey moony|tell me|what is|who is|how to|where is|explain|search for|google)\s+/i, '')
         .trim();
@@ -230,6 +221,85 @@ class AIParser {
       `• *"How does gravity work?"*\n` +
       `• Or type \`/help\` in your server for the full menu! ✨`
     );
+  }
+
+  /**
+   * Directly queries Google Gemini API with multi-model fallback and relaxed safety thresholds
+   */
+  static async callGemini(prompt) {
+    const apiKey = config.geminiKey;
+    if (!apiKey) return null;
+
+    const models = [
+      'gemini-1.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-pro',
+      'gemini-pro'
+    ];
+
+    let lastError = null;
+
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `You are Moony, a cheerful, intelligent, and helpful Discord superbot created by RixiePlayz (who loves Minecraft, Free Fire & gaming). Help the user with: "${prompt}". Provide a natural, smart, and friendly response formatted in clean Discord Markdown. Do not answer like an encyclopedia or search engine summary.`
+                }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1500
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' }
+          ]
+        };
+
+        const res = await axios.post(url, payload, {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 15000
+        });
+
+        const candidate = res.data?.candidates?.[0];
+        const textParts = candidate?.content?.parts?.map(p => p.text).filter(Boolean).join('\n');
+
+        if (textParts && textParts.trim().length > 0) {
+          return { success: true, text: textParts.trim(), model };
+        }
+
+        if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+          return {
+            success: false,
+            error: `Response blocked by Google safety filters (${candidate.finishReason})`
+          };
+        }
+      } catch (err) {
+        const errMessage = err.response?.data?.error?.message || err.message;
+        lastError = errMessage;
+        Logger.warn(`Gemini (${model}) error: ${errMessage}`);
+
+        // If the API key is completely invalid, no need to retry with different models
+        if (
+          errMessage.includes('API key not valid') ||
+          errMessage.includes('API_KEY_INVALID') ||
+          errMessage.includes('PERMISSION_DENIED')
+        ) {
+          break;
+        }
+      }
+    }
+
+    return { success: false, error: lastError || 'Unknown Gemini error' };
   }
 }
 
