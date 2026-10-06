@@ -223,19 +223,86 @@ class AIParser {
     );
   }
 
+  static cachedModels = null;
+  static lastModelsFetch = 0;
+
   /**
-   * Directly queries Google Gemini API with multi-model fallback and relaxed safety thresholds
+   * Queries Google Gemini ModelService to dynamically discover supported models for the API key
+   */
+  static async getAvailableModels(apiKey) {
+    if (this.cachedModels && (Date.now() - this.lastModelsFetch < 3600000)) {
+      return this.cachedModels;
+    }
+
+    const defaultModels = [
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-1.5-pro'
+    ];
+
+    try {
+      const res = await axios.get('https://generativelanguage.googleapis.com/v1beta/models', {
+        params: { key: apiKey },
+        headers: { 'x-goog-api-key': apiKey },
+        timeout: 8000
+      });
+
+      if (res.data && Array.isArray(res.data.models)) {
+        const valid = res.data.models
+          .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+          .map(m => m.name.replace(/^models\//, ''))
+          .filter(m => !m.includes('gemini-pro') && !m.includes('gemini-1.0') && !m.includes('vision')); // exclude deprecated models
+
+        if (valid.length > 0) {
+          const priority = [
+            'gemini-2.5-flash',
+            'gemini-2.0-flash',
+            'gemini-1.5-flash',
+            'gemini-1.5-flash-8b',
+            'gemini-1.5-flash-latest',
+            'gemini-2.5-pro',
+            'gemini-2.0-pro',
+            'gemini-1.5-pro'
+          ];
+          valid.sort((a, b) => {
+            const idxA = priority.findIndex(p => a.startsWith(p));
+            const idxB = priority.findIndex(p => b.startsWith(p));
+            if (idxA === -1 && idxB === -1) return 0;
+            if (idxA === -1) return 1;
+            if (idxB === -1) return -1;
+            return idxA - idxB;
+          });
+
+          this.cachedModels = valid;
+          this.lastModelsFetch = Date.now();
+          Logger.info(`Auto-discovered ${valid.length} active Gemini models (Default: ${valid[0]})`);
+          return valid;
+        }
+      }
+    } catch (err) {
+      if (err.response?.data?.error?.message) {
+        throw new Error(err.response.data.error.message);
+      }
+    }
+
+    return defaultModels;
+  }
+
+  /**
+   * Directly queries Google Gemini API with dynamically resolved models and relaxed safety thresholds
    */
   static async callGemini(prompt) {
     const apiKey = config.geminiKey;
     if (!apiKey) return null;
 
-    const models = [
-      'gemini-1.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-pro',
-      'gemini-pro'
-    ];
+    let models;
+    try {
+      models = await this.getAvailableModels(apiKey);
+    } catch (discoveryErr) {
+      return { success: false, error: discoveryErr.message };
+    }
 
     let lastError = null;
 
@@ -266,7 +333,10 @@ class AIParser {
         };
 
         const res = await axios.post(url, payload, {
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           timeout: 15000
         });
 
