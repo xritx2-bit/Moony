@@ -235,11 +235,13 @@ class AIParser {
     }
 
     const defaultModels = [
-      'gemini-2.5-flash',
-      'gemini-2.0-flash',
-      'gemini-1.5-flash',
-      'gemini-1.5-flash-latest',
-      'gemini-1.5-pro'
+      'gemini-flash-lite-latest',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-flash-latest',
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.5-flash'
     ];
 
     try {
@@ -253,22 +255,25 @@ class AIParser {
         const valid = res.data.models
           .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
           .map(m => m.name.replace(/^models\//, ''))
-          .filter(m => !m.includes('gemini-pro') && !m.includes('gemini-1.0') && !m.includes('vision')); // exclude deprecated models
+          .filter(m => !m.includes('gemini-pro') && !m.includes('gemini-1.0') && !m.includes('vision') && !m.includes('2.5-pro'));
 
         if (valid.length > 0) {
           const priority = [
+            'gemini-flash-lite-latest',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash-lite',
+            'gemini-flash-latest',
+            'gemini-3.8-flash',
+            'gemini-3.7-flash',
+            'gemini-3.5-flash',
+            'gemini-2.5-flash-lite',
             'gemini-2.5-flash',
             'gemini-2.0-flash',
-            'gemini-1.5-flash',
-            'gemini-1.5-flash-8b',
-            'gemini-1.5-flash-latest',
-            'gemini-2.5-pro',
-            'gemini-2.0-pro',
-            'gemini-1.5-pro'
+            'gemini-1.5-flash'
           ];
           valid.sort((a, b) => {
-            const idxA = priority.findIndex(p => a.startsWith(p));
-            const idxB = priority.findIndex(p => b.startsWith(p));
+            const idxA = priority.findIndex(p => a === p || a.startsWith(p));
+            const idxB = priority.findIndex(p => b === p || b.startsWith(p));
             if (idxA === -1 && idxB === -1) return 0;
             if (idxA === -1) return 1;
             if (idxB === -1) return -1;
